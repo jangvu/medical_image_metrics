@@ -13,7 +13,7 @@ This README explains how to compute MAE, MSE, PSNR, and SSIM between a reference
 
 | Metric | Ý nghĩa (Tiếng Việt) | Meaning (English) | Hướng tốt hơn / Better |
 |---|---|---|---|
-| **MAE** | Sai số tuyệt đối trung bình giữa các pixel; dễ diễn giải theo đơn vị cường độ ảnh. | Mean absolute pixel error; interpretable in the image intensity units. | Thấp hơn / Lower |
+| **MAE** | Sai số tuyệt đối trung bình giữa các pixel; diễn giải theo đơn vị cường độ ảnh. | Mean absolute pixel error; interpretable in the image intensity units. | Thấp hơn / Lower |
 | **MSE** | Trung bình bình phương sai số; phạt mạnh các sai số lớn. | Mean squared pixel error; penalizes larger errors more heavily. | Thấp hơn / Lower |
 | **PSNR (dB)** | Tỷ số tín hiệu trên nhiễu đỉnh, được tính từ MSE và mức cường độ pixel tối đa. | Peak signal-to-noise ratio, computed from MSE and the maximum pixel intensity. | Cao hơn / Higher |
 | **SSIM** | So sánh độ sáng, độ tương phản và cấu trúc cục bộ giữa hai ảnh. | Compares local luminance, contrast, and structure between images. | Gần 1 hơn / Closer to 1 |
@@ -31,51 +31,11 @@ Python 3.9+ (recommended) / Python 3.9 trở lên (khuyến nghị)
 pip install numpy scikit-image
 ```
 
-## Code
-
-```python
-import numpy as np
-from skimage.metrics import structural_similarity
-
-
-def my_metrics(actual, predicted):
-    actual = np.asarray(actual, dtype=np.float64)
-    predicted = np.asarray(predicted, dtype=np.float64)
-
-    if actual.ndim != 2 or actual.shape != predicted.shape:
-        raise ValueError("Hai ảnh phải cùng shape [H, W]")
-
-    difference = predicted - actual
-
-    mae = np.mean(np.abs(difference))
-    mse = np.mean(difference ** 2)
-    psnr = float("inf") if mse == 0 else 10 * np.log10(1.0 / mse)
-    ssim = structural_similarity(actual, predicted, data_range=1.0)
-
-    return {
-        "MAE": float(mae),
-        "MSE": float(mse),
-        "PSNR_dB": float(psnr),
-        "SSIM": float(ssim),
-    }
-```
-
 ## Usage / Cách dùng
 
 Hai ảnh đầu vào phải là ảnh xám 2D, cùng kích thước, và đã được chuẩn hóa về `[0, 1]`.
 
 Both inputs must be 2D grayscale images, have the same shape, and be normalized to `[0, 1]`.
-
-```python
-import numpy as np
-from my_metrics import my_metrics
-
-actual = np.random.rand(256, 256)
-predicted = np.clip(actual + np.random.normal(0, 0.02, actual.shape), 0, 1)
-
-scores = my_metrics(actual, predicted)
-print(scores)
-```
 
 Example output / Ví dụ kết quả:
 
@@ -92,31 +52,17 @@ Kết quả trên chỉ để minh họa; nó thay đổi theo dữ liệu đầ
 
 The output above is illustrative; actual values depend on the input images.
 
-## Important considerations for medical images / Lưu ý với ảnh y khoa
+## Important notes / Một vài lưu ý
 
-1. **Chuẩn hóa nhất quán / Consistent intensity scaling**  
-   Đảm bảo ảnh tham chiếu và ảnh dự đoán dùng cùng phép chuẩn hóa, cửa sổ cường độ, và đơn vị. Với dữ liệu không thuộc `[0, 1]`, cần cập nhật `data_range` cho SSIM và mức đỉnh trong công thức PSNR. Với miền cường độ tối đa là `L`, dùng `10 * log10(L**2 / MSE)`.  
-   Ensure reference and predicted images use the same normalization, intensity window, and units. For data outside `[0, 1]`, update SSIM's `data_range` and the peak value in PSNR. For maximum intensity range `L`, use `10 * log10(L**2 / MSE)`.
-
-2. **Đăng ký ảnh / Image registration**  
-   Ảnh cần được căn chỉnh không gian trước khi so sánh. Sai lệch nhỏ về vị trí có thể làm MAE/MSE/PSNR/SSIM thay đổi đáng kể.  
-   Images should be spatially aligned before comparison. Small shifts can substantially affect all four metrics.
-
-3. **SSIM và kích thước ảnh / SSIM and image size**  
-   `structural_similarity` mặc định dùng cửa sổ 7×7; mỗi chiều ảnh thường cần ít nhất 7 pixel.  
-   `structural_similarity` uses a 7×7 window by default, so each image dimension generally needs to be at least 7 pixels.
-
-4. **Ảnh 2D, lát cắt 3D và volume / 2D images, 3D slices, and volumes**  
-   Hàm này chỉ nhận ảnh 2D. Nếu đánh giá volume 3D, hãy xác định rõ cách tổng hợp kết quả theo lát cắt hoặc dùng metric hỗ trợ 3D; không nên xem mỗi lát cắt là một bệnh nhân độc lập.  
-   This function accepts only 2D images. For 3D volumes, define how slice scores are aggregated or use a 3D-capable metric; do not treat each slice as an independent patient.
-
-5. **Không chỉ dựa vào metric toàn ảnh / Do not rely only on whole-image scores**  
-   Metric toàn ảnh có thể che khuất thay đổi nhỏ nhưng quan trọng như tổn thương hoặc cấu trúc giải phẫu. Nên báo cáo thêm đánh giá theo ROI/organ, kiểm tra bảo toàn tổn thương, và đánh giá của chuyên gia khi phù hợp.  
-   Whole-image scores can hide small but important changes to lesions or anatomy. Consider ROI/organ-level evaluation, lesion-preservation checks, and expert review where appropriate.
-
-6. **So sánh công bằng / Fair comparisons**  
-   Dùng cùng preprocessing, tập kiểm thử, và quy tắc tổng hợp cho mọi mô hình. Với dữ liệu nhiều bệnh nhân, tính metric theo từng bệnh nhân trước rồi báo cáo phân phối hoặc trung bình theo quy tắc đã nêu; tránh chia lát cắt giữa train và test.  
-   Use the same preprocessing, test set, and aggregation rules for every model. For multi-patient data, compute scores per patient and report a clearly defined distribution or average; avoid splitting slices from one patient across train and test.
+- **Shape và số chiều / Shape and dimensions:** Code chỉ nhận ảnh xám 2D `[H, W]`; `actual` và `predicted` phải có cùng shape. Code này chưa hỗ trợ ảnh 3D/volume.
+  
+- **Chuẩn hóa và data range / Normalization and data range:** Code hiện giả định cả hai ảnh dùng cùng thang `[0, 1]` (`PSNR` dùng mức đỉnh `1.0`, SSIM dùng `data_range=1.0`). Không chuẩn hóa riêng từng ảnh. Nếu dùng thang `[0, 255]`, phải đổi cả mức đỉnh PSNR thành `255` và SSIM `data_range=255`.
+  
+- **PSNR:** PSNR được tính từ MSE: `10 * log10(L**2 / MSE)`, trong đó `L` là mức cường độ đỉnh (`1` cho `[0, 1]`, `255` cho `[0, 255]`). Với code hiện tại, công thức là `10 * log10(1 / MSE)`. MSE càng thấp thì PSNR càng cao; nếu hai ảnh giống hệt nhau, MSE bằng `0` và PSNR là `inf`.
+  
+- **Kích thước SSIM / SSIM window:** `structural_similarity` mặc định dùng cửa sổ 7×7; mỗi chiều ảnh cần ít nhất 7 pixel. Ảnh nhỏ hơn cần `win_size` lẻ nhỏ hơn.
+  
+- **So sánh y khoa / Medical image evaluation:** Căn chỉnh hai ảnh trước khi so sánh và dùng cùng preprocessing. Metric toàn ảnh có thể bỏ sót thay đổi nhỏ ở tổn thương hoặc cơ quan; cân nhắc đánh giá thêm theo ROI.
 
 ## Interpreting results / Diễn giải kết quả
 
