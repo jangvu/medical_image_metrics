@@ -69,9 +69,3 @@ The output above is illustrative; actual values depend on the input images.
 Không có ngưỡng MAE, MSE, PSNR hay SSIM phổ quát để kết luận mô hình tốt cho mọi phương thức ảnh y khoa. Giá trị phụ thuộc vào modality, chuẩn hóa, giải phẫu, quy trình đăng ký và mục tiêu ứng dụng. So sánh các mô hình trên cùng dữ liệu và pipeline, đồng thời xem ảnh trực quan và đánh giá các vùng quan trọng.
 
 There are no universal MAE, MSE, PSNR, or SSIM thresholds that establish a model as good for every medical imaging modality. Values depend on modality, scaling, anatomy, registration, and the intended use. Compare models on the same data and pipeline, and inspect images and clinically important regions alongside the scores.
-
-## License / Giấy phép
-
-Chọn và thêm giấy phép phù hợp với dự án trước khi phát hành công khai.
-
-Choose and add a license appropriate for your project before public release.
