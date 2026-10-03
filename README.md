@@ -11,7 +11,7 @@ This README explains how to compute MAE, MSE, PSNR, and SSIM between a reference
 
 ## Metrics
 
-| Metric | Ý nghĩa (Tiếng Việt) | Meaning (English) | Hướng tốt hơn / Better |
+| Metric | Ý nghĩa | Meaning | Hướng tốt hơn / Better |
 |---|---|---|---|
 | **MAE** | Sai số tuyệt đối trung bình giữa các pixel; diễn giải theo đơn vị cường độ ảnh. | Mean absolute pixel error; interpretable in the image intensity units. | Thấp hơn / Lower |
 | **MSE** | Trung bình bình phương sai số; phạt mạnh các sai số lớn. | Mean squared pixel error; penalizes larger errors more heavily. | Thấp hơn / Lower |
